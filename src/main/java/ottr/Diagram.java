@@ -22,7 +22,6 @@ public class Diagram extends Application {
     ArrayList<OttrTemplate> templates;
     ArrayList<ClassCoords> classCoords;
 
-    // Constructor (text of the OTTR template is feed to the Parser here)
     public Diagram(String fileContent) {
         this.fileContent = fileContent;
     }
@@ -44,20 +43,20 @@ public class Diagram extends Application {
         double startY = 500.0d;
 
         for (int i = 0; i < templates.size(); i++) {
-            // Create main classes (Yellow)
+            // Create main classes (Yellow) - Signatures
             classes.add( createClass(templates.get(i).templateName, startX ,startY , 1, i));
             double tempStartY = startY;
             startY = startY - (70+17*templates.get(i).headModule.size());
 
-            // Create father classes (Green)
+            // Create father classes (Green) - Instances
             classes.add( createClass(templates.get(i).fatherClassTitle, startX ,startY , 0, i));
 
-            // Child-Father relation added here such as inheritance
+            // Child-Father relation - Signature and Pattern
             Line line01 = new Line(startX + 75, startY, startX + 75, tempStartY);
             line01.getStrokeDashArray().addAll(2d);
             line.add(line01);
 
-            // Starting postions of the class files and this can also be random
+            // Starting positions of the class files and this can also be random
             if(i%2==0){
                 startX = startX - 200;
             }else{
@@ -74,14 +73,14 @@ public class Diagram extends Application {
                 double edX = 0;
                 double edY = 0;
 
-                for (int k = 0; k < classCoords.size(); k++) {
-                    if(classCoords.get(k).className.toLowerCase().trim().contains(startPoint.toLowerCase().trim())){
-                        stX = classCoords.get(k).x;
-                        stY = classCoords.get(k).y;
+                for (ClassCoords classCoord : classCoords) {
+                    if (classCoord.className.toLowerCase().trim().contains(startPoint.toLowerCase().trim())) {
+                        stX = classCoord.x;
+                        stY = classCoord.y;
                     }
-                    if(classCoords.get(k).className.toLowerCase().trim().contains(endPoint.toLowerCase().trim())){
-                        edX = classCoords.get(k).x;
-                        edY = classCoords.get(k).y;
+                    if (classCoord.className.toLowerCase().trim().contains(endPoint.toLowerCase().trim())) {
+                        edX = classCoord.x;
+                        edY = classCoord.y;
                     }
                 }
                 Line lin02 = new Line(stX + 75, stY, edX+ 75, edY);
@@ -101,15 +100,15 @@ public class Diagram extends Application {
     private Text createText(String string, int type) {
         Text text = new Text(string);
         text.setBoundsType(TextBoundsType.VISUAL);
-        if(type==0) {
+        if(type==0) { // Title
             text.setStyle(
                     "-fx-font-family: \"Arial\";" +
                             "-fx-font-size: 18px;"
             );
-        }else if(type==1){
+        } else if(type==1){ // Other text
             text.setStyle(
                     "-fx-font-family: \"Arial\";" +
-                            "-fx-font-size: 12px;"
+                            "-fx-font-size: 13px;"
             );
         }
 
@@ -133,20 +132,32 @@ public class Diagram extends Application {
         Color color = null;
 
         if(type == 0){
-            temp = templates.get(i).bodyModule.features;
-            classBodyY = (temp.split("\n").length + 1) * 17.0d; // width of a class-box varies based on number of features
+            temp = templates.get(i).bodyModule.args;
+            classBodyY = (temp.split("\n").length + 1) * 17.0d; // width of a class-box varies based on number of arguments
             color = Color.rgb(151, 214, 135, 1.0);
         }else {
-            ArrayList<HeadModule> features = templates.get(i).headModule;
-            classBodyY = (features.size() + 1)  * 17.0d;
-            temp = features.get(0).value.substring(1) + ": (" + features.get(0).key + ")";
-            for (int j =1; j<features.size();j++) {
-                temp = temp + "\n" + features.get(j).value.substring(1) + ": (" + features.get(j).key + ")";
+            ArrayList<HeadModule> signatures = templates.get(i).headModule;
+            classBodyY = (signatures.size() + 1)  * 17.0d;
+            temp = signatures.get(0).param.substring(1) + ": (" + signatures.get(0).type + ")";
+            for (int j =1; j<signatures.size();j++) {
+                temp = temp + "\n" + signatures.get(j).param.substring(1) + ": (" + signatures.get(j).type + ")";
+                // Add non-blank/optional flags
+                if(signatures.get(j).flags.size()!= 0){
+                    for (Flag flag : signatures.get(j).flags){
+                        if(flag == Flag.NON_BLANK){
+                            temp = temp + " ⚫";
+                        }
+                        if(flag == Flag.OPTIONAL){
+                            temp = temp + " ⚪";
+                        }
+                    }
+                }
             }
             color = Color.rgb(255, 255, 153, 1.0);
         }
 
         Text bodyText = createText(temp,1);
+
         sx = startX + 10;
         sy = startY + classY + 20;
         bodyText.setX(sx);
@@ -191,74 +202,66 @@ public class Diagram extends Application {
             pattern = content.split("::")[1];
             pattern = pattern.substring(pattern.indexOf("{")+1,pattern.indexOf("}")).trim();
 
-            // Set prefixes Wrong --- need to be fixed
+            // Set prefixes Wrong --- need to be fixed later
             if(signature.contains("@@")){
                 signature = signature.split("@@")[0];
                 prefixes = signature.split("@@")[1];
             }
 
+            // Header: type + flag + param
             String header = "";
-            if(signature.contains("(")){
-                templateName = signature.substring(0,signature.indexOf("("));
-                header = signature.substring(signature.indexOf("(")+1,signature.indexOf(")"));
-            }else{
-                templateName = signature.substring(0,signature.indexOf("["));
-                header = signature.substring(signature.indexOf("[")+1,signature.indexOf("]"));
-            }
-            if(templateName.contains(":")){
-                templateName = templateName.split(":")[1];
-            }
+            templateName = signature.substring(0,signature.indexOf("["));
+            header = signature.substring(signature.indexOf("[")+1,signature.indexOf("]"));
 
             int count = header.split(",").length;
             int i = 0;
             String tempBody = pattern;
             while (i<count) {
-                boolean[] conditions = new boolean[3];
-                String key = "";
-                String value = "";
+                ArrayList<Flag> flags = new ArrayList<>();
+                String type = "";
+                String param = "";
                 int len = header.split(",")[i].trim().split(" ").length;
                 if(len<3){
-                    key = header.split(",")[i].trim().split(" ")[0];
-                    value = header.split(",")[i].trim().split(" ")[1];
+                    type = header.split(",")[i].trim().split(" ")[0];
+                    param = header.split(",")[i].trim().split(" ")[1];
                 }else {
                     String sign = header.split(",")[i].trim().split(" ")[0];
-                    key = header.split(",")[i].trim().split(" ")[1];
-                    value = header.split(",")[i].trim().split(" ")[2];
+                    type = header.split(",")[i].trim().split(" ")[1];
+                    param = header.split(",")[i].trim().split(" ")[2];
 
-                    if(sign.equals("?"))
-                        conditions[0] = true;  //optional
-                    if(sign.equals("+"))
-                        conditions[1] = true;  //blank allowed
-                    if(sign.equals("!"))
-                        conditions[2] = true;  //default value
+                    if(sign.contains("?"))
+                        flags.add(Flag.OPTIONAL);  //optional
+                    if(sign.contains("!"))
+                        flags.add(Flag.NON_BLANK);  //non-blank
                 }
-                headModules.add(new HeadModule(key,value,conditions));
+                headModules.add(new HeadModule(type,param,flags));
                 i++;
             }
 
+            //????
             boolean flag = false;
             if(pattern.contains(")")) {
                 flag = true;
             }
-            String features = "";
+            String args = "";
             ArrayList<String> relations01 = new ArrayList<>();
             ArrayList<String> relations02 = new ArrayList<>();
 
             while (flag){
-                if(tempBody.indexOf(")")==tempBody.length()-1){
+                if(tempBody.indexOf(")")== tempBody.length()-1){
                     flag = false;
                 }
-                String properties = tempBody.substring(0,tempBody.indexOf(")")+1).trim();
+                String instance = tempBody.substring(0,tempBody.indexOf(")")+1).trim();
                 tempBody = tempBody.substring(tempBody.indexOf("),")+1).trim();
 
-                if(properties.toLowerCase().contains("ottr:triple")){
-                    if(properties.toLowerCase().contains("type")){
-                        fatherClassTitle = properties.substring(properties.lastIndexOf(" "),properties.indexOf(")"));
+                if(instance.toLowerCase().contains("ottr:triple")){ // Only base template instances
+                    if(instance.toLowerCase().contains("type")){
+                        fatherClassTitle = instance.substring(instance.lastIndexOf(" "),instance.indexOf(")"));
                     }else{
-                        features = features + properties.substring(properties.indexOf("(") + 1, properties.indexOf(")")) +"\n";
+                        args = args + instance.substring(instance.indexOf("(") + 1, instance.indexOf(")")) +"\n";
                     }
                 }else {
-                    String tempStr = properties.substring(0, properties.indexOf("("));
+                    String tempStr = instance.substring(0, instance.indexOf("("));
                     if (tempStr.contains(",")) {
                         tempStr = tempStr.replaceAll(",", "");
                     }
@@ -267,12 +270,16 @@ public class Diagram extends Application {
                 }
 
             }
-            bodyModules = new BodyModule(relations01, relations02, features);
+            bodyModules = new BodyModule(relations01, relations02, args);
             templates.add( new OttrTemplate(headModules,bodyModules,templateName,fatherClassTitle,prefixes));
         }
     }
 
-    // inner class
+    enum Flag{
+        NON_BLANK,
+        OPTIONAL
+    }
+
     class OttrTemplate
     {
         ArrayList<HeadModule> headModule;
@@ -290,47 +297,43 @@ public class Diagram extends Application {
         }
     }
 
-    // inner class
     class BodyModule{
 
         ArrayList<String> relations01;
         ArrayList<String> relations02;
-        String features;
+        String args;
 
-        public BodyModule(ArrayList<String> relations01, ArrayList<String> relations02, String features) {
+        public BodyModule(ArrayList<String> relations01, ArrayList<String> relations02, String args) {
             this.relations01 = relations01;
             this.relations02 = relations02;
-            this.features = features;
+            this.args = args;
 
         }
     }
 
-    // inner class
     class HeadModule{
         // fields
-        String key;
-        String value;
+        String type;
+        String param;
         String defaultValue;
-        boolean[] conditions;
+        ArrayList<Flag> flags;
 
-        // Constructor
-        public HeadModule(String key, String value, boolean[] conditions) {
-            this.key = key;
-            this.value = value;
-            this.conditions = conditions;
+        public HeadModule(String key, String param, ArrayList<Flag> flags) {
+            this.type = key;
+            this.param = param;
+            this.flags = flags;
         }
 
         // Constructor with default value
-        public HeadModule(String key, String value, boolean[] conditions, String defaultValue) {
-            this.key = key;
-            this.value = value;
-            this.conditions = conditions;
+        public HeadModule(String key, String param, ArrayList<Flag> flags, String defaultValue) {
+            this.type = key;
+            this.param = param;
+            this.flags = flags;
             this.defaultValue = defaultValue;
         }
 
     }
 
-    //Inner class
     class ClassCoords{
         String className;
         int type;

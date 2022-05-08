@@ -25,7 +25,7 @@ public class Controller {
     public void browseFile(javafx.event.ActionEvent actionEvent) {
         try {
             Window window = ((Node) (actionEvent.getSource())).getScene().getWindow();
-            FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("St. OTTR files (*.stOTTR)", "*.stOTTR");
+            FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("stOTTR file (*.stOTTR)", "*.stOTTR");
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(extFilter);
             file = fileChooser.showOpenDialog(window);
