@@ -50,7 +50,7 @@ public class Diagram extends Application {
             startY = startY - (70 + 17 * templates.get(i).headModule.size());
 
             // Create father classes (Green) - Instances
-            classes.add(createClass(templates.get(i).fatherClassTitle, startX, startY, 0, i));
+            classes.add(createClass(templates.get(i).title, startX, startY, 0, i));
 
             // Child-Father relation - Signature and Pattern
             Line line01 = new Line(startX + 75, startY, startX + 75, tempStartY);
@@ -70,7 +70,7 @@ public class Diagram extends Application {
                 String startPoint = templates.get(i).bodyModule.relations01.get(j).substring(3);
                 double stX = 0;
                 double stY = 0;
-                String endPoint = templates.get(i).bodyModule.relations02.get(j);
+                String endPoint = templates.get(i).bodyModule.relations02.get(j).substring(3);
                 double edX = 0;
                 double edY = 0;
 
@@ -196,7 +196,7 @@ public class Diagram extends Application {
             String signature = "";
             String pattern = "";
             String templateName = "";
-            String fatherClassTitle = "";
+            String title = "";
             prefixes = "";
             headModules = new ArrayList<>();
             signature = content.split("::")[0];
@@ -209,7 +209,7 @@ public class Diagram extends Application {
                 prefixes = signature.split("@@")[1];
             }
 
-            // Header: type + flag + param
+            // Header: title + flag + param
             String header = "";
             templateName = signature.substring(0, signature.indexOf("["));
             header = signature.substring(signature.indexOf("[") + 1, signature.indexOf("]"));
@@ -248,6 +248,7 @@ public class Diagram extends Application {
             ArrayList<String> relations01 = new ArrayList<>();
             ArrayList<String> relations02 = new ArrayList<>();
 
+            // Check the instances
             while (flag) {
                 if (tempBody.indexOf(")") == tempBody.length() - 1) {
                     flag = false;
@@ -257,7 +258,7 @@ public class Diagram extends Application {
 
                 if (instance.toLowerCase().contains("ottr:triple")) { // Only base template instances
                     if (instance.toLowerCase().contains("type")) {
-                        fatherClassTitle = instance.substring(instance.lastIndexOf(" "), instance.indexOf(")"));
+                        title = instance.substring(instance.lastIndexOf(" "), instance.indexOf(")"));
                     } else {
                         args = args + instance.substring(instance.indexOf("(") + 1, instance.indexOf(")")) + "\n";
                     }
@@ -272,7 +273,7 @@ public class Diagram extends Application {
 
             }
             bodyModules = new BodyModule(relations01, relations02, args);
-            templates.add(new OttrTemplate(headModules, bodyModules, templateName, fatherClassTitle, prefixes));
+            templates.add(new OttrTemplate(headModules, bodyModules, templateName, title, prefixes));
         }
     }
 
@@ -285,14 +286,14 @@ public class Diagram extends Application {
         ArrayList<HeadModule> headModule;
         BodyModule bodyModule;
         String templateName;
-        String fatherClassTitle;
+        String title;
         String prefix;
 
-        public OttrTemplate(ArrayList<HeadModule> headModule, BodyModule bodyModule, String templateName, String fatherClassTitle, String prefix) {
+        public OttrTemplate(ArrayList<HeadModule> headModule, BodyModule bodyModule, String templateName, String title, String prefix) {
             this.headModule = headModule;
             this.bodyModule = bodyModule;
             this.templateName = templateName;
-            this.fatherClassTitle = fatherClassTitle;
+            this.title = title;
             this.prefix = prefix;
         }
     }
