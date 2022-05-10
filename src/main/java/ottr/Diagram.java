@@ -205,7 +205,6 @@ public class Diagram extends Application {
             String signature = "";
             String pattern = "";
             String templateName = "";
-            String title = "";
             prefixes = "";
             headModules = new ArrayList<>();
             signature = content.split("::")[0];
@@ -278,7 +277,7 @@ public class Diagram extends Application {
 
             }
             bodyModules = new BodyModule(relations01, relations02, args);
-            templates.add(new OttrTemplate(headModules, bodyModules, templateName, title, prefixes));
+            templates.add(new OttrTemplate(headModules, bodyModules, templateName, prefixes));
         }
     }
 
@@ -291,14 +290,12 @@ public class Diagram extends Application {
         ArrayList<HeadModule> headModule;
         BodyModule bodyModule;
         String templateName;
-        String title;
         String prefix;
 
-        public OttrTemplate(ArrayList<HeadModule> headModule, BodyModule bodyModule, String templateName, String title, String prefix) {
+        public OttrTemplate(ArrayList<HeadModule> headModule, BodyModule bodyModule, String templateName,  String prefix) {
             this.headModule = headModule;
             this.bodyModule = bodyModule;
             this.templateName = templateName;
-            this.title = title;
             this.prefix = prefix;
         }
     }
