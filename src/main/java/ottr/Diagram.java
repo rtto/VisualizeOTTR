@@ -127,7 +127,7 @@ public class Diagram extends Application {
         if (type == 0 || type == 2) {
             classCoords.add(new ClassCoords(className, type, startX, startY));
         }
-        double classX = 190.0d; // length of a class-box
+        double classX = 195.0d; // length of a class-box
         double classY = 30.0d;  // height of a class-box head
         double classBodyY = 0;
         Text titleText = createText(className, 0);
