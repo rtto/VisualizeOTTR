@@ -50,7 +50,7 @@ public class Diagram extends Application {
             startY = startY - (70 + 17 * templates.get(i).headModule.size());
 
             // Create father classes (Green) - Instances
-            classes.add(createClass(templates.get(i).title, startX, startY, 0, i));
+            classes.add(createClass(templates.get(i).templateName, startX, startY, 2, i));
 
             // Child-Father relation - Signature and Pattern
             Line line01 = new Line(startX + 75, startY, startX + 75, tempStartY);
@@ -111,6 +111,12 @@ public class Diagram extends Application {
                     "-fx-font-family: \"Arial\";" +
                             "-fx-font-size: 13px;"
             );
+        } else if (type == 2) { // Instance title with underline
+            text.setStyle(
+                    "-fx-font-family: \"Arial\";" +
+                            "-fx-font-size: 18px;"
+            );
+            text.setUnderline(true);
         }
 
         return text;
@@ -118,13 +124,16 @@ public class Diagram extends Application {
 
     // Create a class box
     Group createClass(String className, double startX, double startY, int type, int i) {
-        if (type == 0) {
+        if (type == 0 || type == 2) {
             classCoords.add(new ClassCoords(className, type, startX, startY));
         }
         double classX = 190.0d; // length of a class-box
         double classY = 30.0d;  // height of a class-box head
         double classBodyY = 0;
         Text titleText = createText(className, 0);
+        if (type == 2){
+            titleText = createText(className, 2);
+        }
         double sx = startX + classX / 2 - getSize(titleText, 0);
         double sy = startY + classY / 2 - getSize(titleText, 1);
         titleText.setX(sx);
@@ -132,11 +141,7 @@ public class Diagram extends Application {
         String temp = "";
         Color color = null;
 
-        if (type == 0) {
-            temp = templates.get(i).bodyModule.args;
-            classBodyY = (temp.split("\n").length + 1) * 17.0d; // width of a class-box varies based on number of arguments
-            color = Color.rgb(151, 214, 135, 1.0);
-        } else {
+        if (type == 1) {
             ArrayList<HeadModule> signatures = templates.get(i).headModule;
             classBodyY = (signatures.size() + 1) * 17.0d;
             temp = signatures.get(0).param.substring(1) + ": (" + signatures.get(0).type + ")";
@@ -155,6 +160,10 @@ public class Diagram extends Application {
                 }
             }
             color = Color.rgb(255, 255, 153, 1.0);
+        } else {
+            temp = templates.get(i).bodyModule.args;
+            classBodyY = (temp.split("\n").length + 1) * 17.0d; // width of a class-box varies based on number of arguments
+            color = Color.rgb(151, 214, 135, 1.0);
         }
 
         Text bodyText = createText(temp, 1);
@@ -239,7 +248,6 @@ public class Diagram extends Application {
                 i++;
             }
 
-            //????
             boolean flag = false;
             if (pattern.contains(")")) {
                 flag = true;
@@ -257,11 +265,8 @@ public class Diagram extends Application {
                 tempBody = tempBody.substring(tempBody.indexOf("),") + 1).trim();
 
                 if (instance.toLowerCase().contains("ottr:triple")) { // Only base template instances
-                    if (instance.toLowerCase().contains("type")) {
-                        title = instance.substring(instance.lastIndexOf(" "), instance.indexOf(")"));
-                    } else {
                         args = args + instance.substring(instance.indexOf("(") + 1, instance.indexOf(")")) + "\n";
-                    }
+
                 } else {
                     String tempStr = instance.substring(0, instance.indexOf("("));
                     if (tempStr.contains(",")) {
